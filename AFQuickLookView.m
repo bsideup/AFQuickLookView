@@ -27,12 +27,15 @@ static NSMutableDictionary* _mimeTypesToExtensionsDictionary = nil;
 
 typedef void (^AFQuickLookPreviewSuccessBlock)(void);
 typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
+typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead);
 
 @interface AFQuickLookView () <QLPreviewControllerDelegate, QLPreviewControllerDataSource>
 @property(nonatomic, strong, readwrite) QLPreviewController *previewController;
 @property(nonatomic, strong, readwrite) NSURL* fileURL;
 @property(nonatomic, strong, readwrite) AFQuickLookPreviewSuccessBlock successBlock;
 @property(nonatomic, strong, readwrite) AFQuickLookPreviewFailureBlock failureBlock;
+@property(nonatomic, strong, readwrite) AFQuickLookPreviewProgressBlock progressBlock;
+@property(nonatomic, strong, readwrite) UIView* attachmentDetailView;
 
 @end
 
@@ -46,13 +49,34 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
         _previewController = [[QLPreviewController alloc] init];
         _previewController.dataSource = self;
         _previewController.view.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+        
+        [self setupAttachmentDetailViewWithFrame:frame];
+        [self addSubview:_attachmentDetailView];
+        
     }
     return self;
 }
 
+#pragma mark - view setup
+
+- (void)setupAttachmentDetailViewWithFrame:(CGRect)frame {
+    self.attachmentDetailView = [[UIView alloc] initWithFrame:frame];
+    self.attachmentDetailView.backgroundColor = [UIColor redColor];
+    self.attachmentDetailView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+}
+
+#pragma mark - actions
+
 - (void)downloadDocumentAtURL:(NSURL*)url
                       success:(void (^)(AFHTTPRequestOperation* operation, NSURL *localFileURL))success
                       failure:(void (^)(AFHTTPRequestOperation* operation, NSError* error))failure {
+    [self downloadDocumentAtURL:url success:success failure:failure progress:NULL];
+}
+
+- (void)downloadDocumentAtURL:(NSURL*)url
+                      success:(void (^)(AFHTTPRequestOperation* operation, NSURL *localFileURL))success
+                      failure:(void (^)(AFHTTPRequestOperation* operation, NSError* error))failure
+                     progress:(void (^)(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress {
     __weak __typeof(&*self)weakSelf = self;
     [[AFQuickLookViewHTTPClient sharedClient] getPath:url.absoluteString
                                            parameters:nil
@@ -63,8 +87,7 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
                                                 failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                                                     [weakSelf handleCouldNotSaveDataToTemporaryFileWithOperation:operation error:error];
                                                 }];
-     } failure:failure progress:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
-     }];
+     } failure:failure progress:progress];
 }
 
 - (void)saveDataToTemporaryFileWithOperation:(AFHTTPRequestOperation*)operation
@@ -108,19 +131,27 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
 #pragma mark - preview methods
 
 - (void)previewDocumentAtURL:(NSURL*)url {
-    [self previewDocumentAtURL:url inPreviewController:self.previewController success:NULL failure:NULL];
+    [self previewDocumentAtURL:url inPreviewController:self.previewController success:NULL failure:NULL progress:NULL];
 }
 
 - (void)previewDocumentAtURL:(NSURL*)url
                      success:(void (^)(void))success
                      failure:(void (^)(NSError* error))failure {
-    [self previewDocumentAtURL:url inPreviewController:self.previewController success:success failure:failure];
+    [self previewDocumentAtURL:url inPreviewController:self.previewController success:success failure:failure progress:NULL];
+}
+
+- (void)previewDocumentAtURL:(NSURL*)url
+                     success:(void (^)(void))success
+                     failure:(void (^)(NSError* error))failure
+                    progress:(void (^)(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress {
+    [self previewDocumentAtURL:url inPreviewController:self.previewController success:success failure:failure progress:progress];
 }
 
 - (void)previewDocumentAtURL:(NSURL*)url
          inPreviewController:(QLPreviewController*)previewController
                      success:(void (^)(void))success
-                     failure:(void (^)(NSError* error))failure {
+                     failure:(void (^)(NSError* error))failure
+                    progress:(void (^)(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress {
     self.successBlock = success;
     self.failureBlock = failure;
     __weak __typeof(&*self)weakSelf = self;
@@ -131,14 +162,17 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
                             success:
          ^(AFHTTPRequestOperation *operation, NSURL *localFileURL) {
              [weakSelf openDocumentPreviewAtLocalURL:localFileURL inPreviewController:previewController];
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            [weakSelf handleCouldNotDownloadDataForGivenURL:url operation:operation error:error];
-        }];
+         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+             [weakSelf handleCouldNotDownloadDataForGivenURL:url operation:operation error:error];
+         } progress:progress];
     }
 }
 
 - (void)openDocumentPreviewAtLocalURL:(NSURL*)url
                   inPreviewController:(QLPreviewController *)previewController {
+    
+    [_attachmentDetailView removeFromSuperview];
+    
     self.fileURL = url;
     [self addSubview:_previewController.view];
     [previewController reloadData];
@@ -243,6 +277,7 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
     return nil;
 }
 
+#pragma mark - handle file extensions for MIME types
 
 - (NSString*)fileExtensionForMIMEType:(NSString*)mimeType {
     if (NO == [mimeType isKindOfClass:[NSString class]]) {
