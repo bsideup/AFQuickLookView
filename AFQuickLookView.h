@@ -23,10 +23,37 @@
 #import <QuickLook/QuickLook.h>
 
 @interface AFQuickLookView : UIView
+
+/**
+ 
+ */
 @property(nonatomic, strong, readonly) UIView* attachmentDetailView;
+
+/**
+ 
+ */
 @property(nonatomic, strong, readonly) UIProgressView* progressView;
+
+/**
+ 
+ */
 @property(nonatomic, strong, readonly) UILabel* filenameLabel;
+
+/**
+ 
+ */
 @property(nonatomic, strong, readonly) UIImageView* fileImageView;
+
+/**
+ 
+ */
+@property(nonatomic, assign, readwrite) BOOL showAttachmentDetailView;
+
+
+/**
+ 
+ */
+- (id)initWithFrame:(CGRect)frame showAttachmentDetailView:(BOOL)showAttachmentDetailView;
 
 /**
  

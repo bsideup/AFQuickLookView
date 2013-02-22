@@ -50,11 +50,20 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 
 @implementation AFQuickLookView
 
-- (id)initWithFrame:(CGRect)frame {
+- (id)initWithFrame:(CGRect)frame showAttachmentDetailView:(BOOL)showAttachmentDetailView {
     self = [super initWithFrame:frame];
     if (self) {
+        _showAttachmentDetailView = showAttachmentDetailView;
         [self setupPreviewControllerInFrame:frame];
         [self setupAttachmentDetailViewInFrame:frame];
+    }
+    return self;
+}
+
+- (id)initWithFrame:(CGRect)frame {
+    self = [self initWithFrame:frame showAttachmentDetailView:YES];
+    if (self) {
+        
     }
     return self;
 }
@@ -81,6 +90,9 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 }
 
 - (void)setupAttachmentDetailViewInFrame:(CGRect)frame {
+    if (NO == self.showAttachmentDetailView) {
+        return;
+    }
     
     // initialize attachment detail view
     self.attachmentDetailView = [[UIView alloc] initWithFrame:frame];
@@ -243,17 +255,16 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 }
 
 - (void)openDocumentPreviewAtLocalURL:(NSURL*)url
-                  inPreviewController:(QLPreviewController *)previewController {
+                  inPreviewController:(QLPreviewController *)previewController {    
+    [_attachmentDetailView removeFromSuperview];
     
-//    [_attachmentDetailView removeFromSuperview];
-//    
-//    self.fileURL = url;
-//    [self addSubview:_previewController.view];
-//    [previewController reloadData];
-//    
-//    if (self.successBlock) {
-//        self.successBlock();
-//    }
+    self.fileURL = url;
+    [self addSubview:_previewController.view];
+    [previewController reloadData];
+    
+    if (self.successBlock) {
+        self.successBlock();
+    }
 }
 
 #pragma mark - cancel request
