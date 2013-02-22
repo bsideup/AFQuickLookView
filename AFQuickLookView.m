@@ -36,7 +36,7 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 @property(nonatomic, strong, readwrite) AFQuickLookPreviewFailureBlock failureBlock;
 @property(nonatomic, strong, readwrite) AFQuickLookPreviewProgressBlock progressBlock;
 @property(nonatomic, strong, readwrite) UIView* attachmentDetailView;
-
+@property(nonatomic, strong, readwrite) UIProgressView* progressView;
 @end
 
 @implementation AFQuickLookView
@@ -50,19 +50,37 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
         _previewController.dataSource = self;
         _previewController.view.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
         
-        [self setupAttachmentDetailViewWithFrame:frame];
-        [self addSubview:_attachmentDetailView];
-        
+        [self setupAttachmentDetailViewInFrame:frame];
     }
     return self;
 }
 
 #pragma mark - view setup
 
-- (void)setupAttachmentDetailViewWithFrame:(CGRect)frame {
+- (void)setupAttachmentDetailViewInFrame:(CGRect)frame {
     self.attachmentDetailView = [[UIView alloc] initWithFrame:frame];
-    self.attachmentDetailView.backgroundColor = [UIColor redColor];
     self.attachmentDetailView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+    [self addSubview:self.attachmentDetailView];
+    
+    [self setupProgressViewInAttachmentDetailView];
+}
+
+- (void)setupProgressViewInAttachmentDetailView {
+    self.progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
+    self.progressView.frame = CGRectMake(10, 200, 250, 20);
+    
+    CGRect attachmentDetailFrame = self.attachmentDetailView.frame;
+    CGFloat paddingBottom = 20.0f;
+    CGRect oldFrame = self.progressView.frame;
+    CGRect progressViewFrame = CGRectMake((attachmentDetailFrame.size.width - oldFrame.size.width)/2, attachmentDetailFrame.size.height - oldFrame.size.height - paddingBottom, oldFrame.size.width, oldFrame.size.width );
+    self.progressView.frame = progressViewFrame;
+    [self.attachmentDetailView addSubview:self.progressView];
+}
+
+- (void)refreshProgressViewWithTotalBytesRead:(long long)totalBytesRead
+                     totalBytesExpectedToRead:(long long)totalBytesExpectedToRead {
+    CGFloat progress = ((CGFloat)totalBytesRead / (CGFloat)totalBytesExpectedToRead);
+    self.progressView.progress = progress;
 }
 
 #pragma mark - actions
@@ -131,13 +149,19 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 #pragma mark - preview methods
 
 - (void)previewDocumentAtURL:(NSURL*)url {
-    [self previewDocumentAtURL:url inPreviewController:self.previewController success:NULL failure:NULL progress:NULL];
+    __weak __typeof(&*self)weakSelf = self;
+    [self previewDocumentAtURL:url inPreviewController:self.previewController success:NULL failure:NULL progress:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+        [weakSelf refreshProgressViewWithTotalBytesRead:totalBytesRead totalBytesExpectedToRead:totalBytesExpectedToRead];
+    }];
 }
 
 - (void)previewDocumentAtURL:(NSURL*)url
                      success:(void (^)(void))success
                      failure:(void (^)(NSError* error))failure {
-    [self previewDocumentAtURL:url inPreviewController:self.previewController success:success failure:failure progress:NULL];
+    __weak __typeof(&*self)weakSelf = self;
+    [self previewDocumentAtURL:url inPreviewController:self.previewController success:success failure:failure progress:^(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead) {
+        [weakSelf refreshProgressViewWithTotalBytesRead:totalBytesRead totalBytesExpectedToRead:totalBytesExpectedToRead];
+    }];
 }
 
 - (void)previewDocumentAtURL:(NSURL*)url

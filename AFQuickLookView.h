@@ -23,6 +23,8 @@
 #import <QuickLook/QuickLook.h>
 
 @interface AFQuickLookView : UIView
+@property(nonatomic, strong, readonly) UIView* attachmentDetailView;
+@property(nonatomic, strong, readonly) UIProgressView* progressView;
 
 /**
  
@@ -35,4 +37,12 @@
 - (void)previewDocumentAtURL:(NSURL*)url
                      success:(void (^)(void))success
                      failure:(void (^)(NSError* error))failure;
+
+/**
+ 
+ */
+- (void)previewDocumentAtURL:(NSURL*)url
+                     success:(void (^)(void))success
+                     failure:(void (^)(NSError* error))failure
+                    progress:(void (^)(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress;
 @end
