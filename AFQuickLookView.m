@@ -23,6 +23,13 @@
 #import "AFQuickLookView.h"
 #import <AFNetworking/AFNetworking.h>
 
+// Control the positioning of attachmentDetailView subviews here
+static CGFloat kPaddingTopBetweenFileImageViewAndSuperview = 10.0f;
+static CGFloat kPaddingTopBetweenFilenameLabelAndImageView = 10.0f;
+static CGFloat kPaddingTopBetweenProgressViewAndFilenameLabel = 10.0f;
+static CGFloat kPaddingLeftAndRightFilenameLabel = 60.0f;
+static CGFloat kPaddingLeftAndRightProgressView = 80.0f;
+
 static NSMutableDictionary* _mimeTypesToExtensionsDictionary = nil;
 
 typedef void (^AFQuickLookPreviewSuccessBlock)(void);
@@ -37,44 +44,87 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 @property(nonatomic, strong, readwrite) AFQuickLookPreviewProgressBlock progressBlock;
 @property(nonatomic, strong, readwrite) UIView* attachmentDetailView;
 @property(nonatomic, strong, readwrite) UIProgressView* progressView;
+@property(nonatomic, strong, readwrite) UILabel* filenameLabel;
+@property(nonatomic, strong, readwrite) UIImageView* fileImageView;
 @end
 
 @implementation AFQuickLookView
 
-- (id)initWithFrame:(CGRect)frame
-{
+- (id)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        // initialize the QuickLookPreviewController
-        _previewController = [[QLPreviewController alloc] init];
-        _previewController.dataSource = self;
-        _previewController.view.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
-        
+        [self setupPreviewControllerInFrame:frame];
         [self setupAttachmentDetailViewInFrame:frame];
     }
     return self;
 }
 
-#pragma mark - view setup
+#pragma mark - general view setup
+
+- (void)setupPreviewControllerInFrame:(CGRect)frame {
+    self.previewController = [[QLPreviewController alloc] init];
+    self.previewController.dataSource = self;
+    self.previewController.view.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+}
+
+#pragma mark - attachment detail view setup
+- (void)initializeAttachmentDetailViewSubviews {
+    self.progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
+    self.fileImageView = [[UIImageView alloc] initWithFrame:CGRectZero];
+    self.filenameLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+}
+
+- (void)addSubviewsToAttachmentDetailView:(UIView*)attachmentDetailView {
+    [attachmentDetailView addSubview:self.fileImageView];
+    [attachmentDetailView addSubview:self.filenameLabel];
+    [attachmentDetailView addSubview:self.progressView];
+}
 
 - (void)setupAttachmentDetailViewInFrame:(CGRect)frame {
+    
+    // initialize attachment detail view
     self.attachmentDetailView = [[UIView alloc] initWithFrame:frame];
     self.attachmentDetailView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
     [self addSubview:self.attachmentDetailView];
+    self.attachmentDetailView.backgroundColor = [UIColor redColor];
     
-    [self setupProgressViewInAttachmentDetailView];
+    [self initializeAttachmentDetailViewSubviews];
+    [self layoutSubviewsForAttachmentDetailView:self.attachmentDetailView];
+    [self addSubviewsToAttachmentDetailView:self.attachmentDetailView];
 }
 
-- (void)setupProgressViewInAttachmentDetailView {
-    self.progressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
-    self.progressView.frame = CGRectMake(10, 200, 250, 20);
-    
-    CGRect attachmentDetailFrame = self.attachmentDetailView.frame;
-    CGFloat paddingBottom = 20.0f;
-    CGRect oldFrame = self.progressView.frame;
-    CGRect progressViewFrame = CGRectMake((attachmentDetailFrame.size.width - oldFrame.size.width)/2, attachmentDetailFrame.size.height - oldFrame.size.height - paddingBottom, oldFrame.size.width, oldFrame.size.width );
+- (void)layoutSubviewsForAttachmentDetailView:(UIView*)attachmentDetailView {
+    CGRect attachmentDetailViewFrame = attachmentDetailView.frame;
+    [self setupFileImageViewWithAttachmentDetailViewFrame:attachmentDetailViewFrame];
+    [self setupFilenameLabelWithAttachmentDetailViewFrame:attachmentDetailViewFrame fileImageViewFrame:self.fileImageView.frame];
+    [self setupProgressViewWithAttachmentDetailViewFrame:attachmentDetailViewFrame filenameLabelFrame:self.filenameLabel.frame];
+}
+
+- (void)setupFileImageViewWithAttachmentDetailViewFrame:(CGRect)attachmentDetailViewFrame {
+    CGSize fileImageViewSize = CGSizeMake(100, 120);
+    CGFloat paddingTop = kPaddingTopBetweenFileImageViewAndSuperview;
+    CGRect fileImageViewRect = CGRectMake((attachmentDetailViewFrame.size.width - fileImageViewSize.width)/2, paddingTop, fileImageViewSize.width, fileImageViewSize.height);
+    self.fileImageView.frame = fileImageViewRect;
+    self.fileImageView.backgroundColor = [UIColor blackColor];
+}
+
+- (void)setupFilenameLabelWithAttachmentDetailViewFrame:(CGRect)attachmentDetailViewFrame
+                                     fileImageViewFrame:(CGRect)fileImageViewFrame {
+    CGFloat paddingTop = kPaddingTopBetweenFilenameLabelAndImageView;
+    CGFloat paddingLeftAndRight = kPaddingLeftAndRightFilenameLabel;
+    CGSize filenameLabelSize = CGSizeMake((attachmentDetailViewFrame.size.width - 2*paddingLeftAndRight), 30);
+    CGRect filenameLabelRect = CGRectMake(paddingLeftAndRight, fileImageViewFrame.origin.y + fileImageViewFrame.size.height + paddingTop, filenameLabelSize.width, filenameLabelSize.height);
+    self.filenameLabel.frame = filenameLabelRect;
+    self.filenameLabel.backgroundColor = [UIColor blueColor];
+}
+
+- (void)setupProgressViewWithAttachmentDetailViewFrame:(CGRect)attachmentDetailViewFrame
+                                    filenameLabelFrame:(CGRect)filenameLabelFrame {
+    CGFloat paddingTop = kPaddingTopBetweenProgressViewAndFilenameLabel;
+    CGFloat paddingLeftAndRight = kPaddingLeftAndRightProgressView;
+    CGSize progressViewSize = CGSizeMake((attachmentDetailViewFrame.size.width - 2*paddingLeftAndRight), 10);
+    CGRect progressViewFrame = CGRectMake(paddingLeftAndRight, filenameLabelFrame.origin.y + filenameLabelFrame.size.height + paddingTop, progressViewSize.width, progressViewSize.height );
     self.progressView.frame = progressViewFrame;
-    [self.attachmentDetailView addSubview:self.progressView];
 }
 
 - (void)refreshProgressViewWithTotalBytesRead:(long long)totalBytesRead
@@ -195,15 +245,15 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 - (void)openDocumentPreviewAtLocalURL:(NSURL*)url
                   inPreviewController:(QLPreviewController *)previewController {
     
-    [_attachmentDetailView removeFromSuperview];
-    
-    self.fileURL = url;
-    [self addSubview:_previewController.view];
-    [previewController reloadData];
-    
-    if (self.successBlock) {
-        self.successBlock();
-    }
+//    [_attachmentDetailView removeFromSuperview];
+//    
+//    self.fileURL = url;
+//    [self addSubview:_previewController.view];
+//    [previewController reloadData];
+//    
+//    if (self.successBlock) {
+//        self.successBlock();
+//    }
 }
 
 #pragma mark - cancel request
