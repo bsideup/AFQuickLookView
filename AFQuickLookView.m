@@ -23,6 +23,8 @@
 #import "AFQuickLookView.h"
 #import <AFNetworking/AFNetworking.h>
 
+static NSMutableDictionary* _mimeTypesToExtensionsDictionary = nil;
+
 typedef void (^AFQuickLookPreviewSuccessBlock)(void);
 typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
 
@@ -173,8 +175,14 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
 }
 
 - (NSString*)filenameFromResponse:(NSHTTPURLResponse*)response {
-    NSString* filename = [self filenameFromContentDispositionHeaderInResponse:response];
-    if (nil == filename) {
+    NSString* filename = nil;
+    NSString* filenameFromContentType = [self filenameFromContentTypeHeaderInResponse:response];
+    NSString* filenameFromContentDisposition = [self filenameFromContentDispositionHeaderInResponse:response];
+    if (filenameFromContentType) {
+        filename = filenameFromContentType;
+    } else if(filenameFromContentDisposition) {
+        filename = filenameFromContentDisposition;
+    } else {
         filename = [self genericTemporaryFileName];
     }
     return filename;
@@ -185,6 +193,16 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
     NSString* contentDisposition = response.allHeaderFields[@"Content-Disposition"];
     if (contentDisposition) {
         filename = [[self getFilenameFrom:contentDisposition] stringByTrimmingCharactersInSet:self.characterSetToTrimFromFilename];
+    }
+    return filename;
+}
+
+- (NSString*)filenameFromContentTypeHeaderInResponse:(NSHTTPURLResponse*)response {
+    NSString* filename = nil;
+    if (response.MIMEType) {
+        NSString* extension = [self fileExtensionForMIMEType:response.MIMEType];
+        filename = self.genericTemporaryFileName;
+        filename = [filename stringByAppendingFormat:@".%@", extension];
     }
     return filename;
 }
@@ -225,5 +243,32 @@ typedef void (^AFQuickLookPreviewFailureBlock)(NSError* error);
     return nil;
 }
 
+
+- (NSString*)fileExtensionForMIMEType:(NSString*)mimeType {
+    if (NO == [mimeType isKindOfClass:[NSString class]]) {
+        return nil;
+    }
+    
+    NSMutableDictionary* extensions = [AFQuickLookView mimeTypesToExtensionsDictionary];
+    NSString* extension = extensions[mimeType];
+    
+    return extension;
+}
+
++ (NSMutableDictionary*) mimeTypesToExtensionsDictionary {
+    if (nil == _mimeTypesToExtensionsDictionary) {
+        _mimeTypesToExtensionsDictionary = [NSMutableDictionary dictionary];
+        _mimeTypesToExtensionsDictionary[@"application/pdf"] = @"pdf";
+        _mimeTypesToExtensionsDictionary[@"application/msword"] = @"doc";
+        _mimeTypesToExtensionsDictionary[@"image/jpeg"] = @"jpeg";
+        _mimeTypesToExtensionsDictionary[@"application/pdf"] = @"pdf";
+        _mimeTypesToExtensionsDictionary[@"application/vnd.ms-powerpoint"] = @"ppt";
+        _mimeTypesToExtensionsDictionary[@"application/rtf"] = @"rtf";
+        _mimeTypesToExtensionsDictionary[@"image/tiff"] = @"tiff";
+        _mimeTypesToExtensionsDictionary[@"text/plain"] = @"txt";
+        _mimeTypesToExtensionsDictionary[@"application/vnd.ms-excel"] = @"xls";
+    }
+    return _mimeTypesToExtensionsDictionary;
+}
 
 @end
