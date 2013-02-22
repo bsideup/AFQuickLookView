@@ -26,6 +26,16 @@ NSLog(@"Could not preview document. Error:%@", error);
 
 ```
 
+## Supported file formats
+
+- iWork documents
+- Microsoft Office documents (Office '97 and newer)
+- Rich Text Format (RTF) documents
+- PDF files
+- Images
+- Text files
+- Comma-separated value (csv) files
+
 ## HTTP layer Details
 
 In order for AFQuickLookView to work with remote files, the server response has to comply to one of these options: 
