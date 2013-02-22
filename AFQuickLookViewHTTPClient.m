@@ -50,10 +50,18 @@ static AFQuickLookViewHTTPClient *_sharedClient = nil;
         success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
         failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
        progress:(void (^)(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress {
-	NSURLRequest *request = [self requestWithMethod:@"GET" path:path parameters:parameters];
+    NSURLRequest *request = [self requestWithMethod:@"GET" path:path parameters:parameters];
     AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
     [operation setDownloadProgressBlock:progress];
     [self enqueueHTTPRequestOperation:operation];
+}
+
+- (void)cancelAllDownloadOperations {
+    for (NSOperation *operation in [self.operationQueue operations]) {
+        if ([operation isKindOfClass:[AFHTTPRequestOperation class]]) {
+            [operation cancel];
+        }
+    }
 }
 
 @end

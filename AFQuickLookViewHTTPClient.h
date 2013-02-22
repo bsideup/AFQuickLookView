@@ -23,12 +23,23 @@
 
 @interface AFQuickLookViewHTTPClient : AFHTTPClient
 
+/**
+ 
+ */
 + (AFQuickLookViewHTTPClient*)sharedClient;
 
+/**
+ 
+ */
 - (void)getPath:(NSString *)path
      parameters:(NSDictionary *)parameters
         success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
         failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
        progress:(void (^)(NSUInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress;
+
+/**
+ 
+ */
+- (void)cancelAllDownloadOperations;
 
 @end

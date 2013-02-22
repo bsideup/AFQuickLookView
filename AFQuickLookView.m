@@ -206,6 +206,12 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
     }
 }
 
+#pragma mark - cancel request
+
+- (void)cancelDownloadOperation {
+    [[AFQuickLookViewHTTPClient sharedClient] cancelAllDownloadOperations];
+}
+
 #pragma mark - QLPreviewControllerDataSource delegate
 
 - (NSInteger)numberOfPreviewItemsInPreviewController:(QLPreviewController *)previewController {

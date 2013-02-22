@@ -29,6 +29,11 @@
 /**
  
  */
+- (void)cancelDownloadOperation;
+
+/**
+ 
+ */
 - (void)previewDocumentAtURL:(NSURL*)url;
 
 /**
