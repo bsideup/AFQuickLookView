@@ -26,9 +26,17 @@ NSLog(@"Could not preview document. Error:%@", error);
 
 ```
 
-## Caveats
+## HTTP layer Details
 
-In order for AFQuickLookView to work with remote files, the server response has to include the right filename and extension in the *Content-Disposition* header, i.e.:
+In order for AFQuickLookView to work with remote files, the server response has to comply to one of these options: 
+
+a) include a *Content-Type* header, e.g.:
+
+```
+Content-Type: application/pdf
+```
+
+b) include the right filename and extension in the *Content-Disposition* header, i.e.:
 
 ```
 Content-Disposition: attachment;filename="examplefile.pdf"
@@ -46,6 +54,7 @@ Claudiu-Vlad Ursache
 
 - https://github.com/ursachec
 - https://twitter.com/ursachec
+- http://cvursache.com
 
 ## License
 
