@@ -116,9 +116,6 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
     self.preDownloadDetailView.frame = CGRectMake(0, 0, preDownloadDetailView.frame.size.width, preDownloadDetailView.frame.size.height);
     [self addSubview:self.preDownloadDetailView];
     
-    self.preDownloadDetailView.backgroundColor = [UIColor redColor];
-    self.preDownloadFileImageView.backgroundColor = [UIColor blueColor];
-    
     [self initializePreDownloadDetailViewSubviews];
     [self layoutSubviewsForPreDownloadDetailView:self.preDownloadDetailView];
     [self addSubviewsToPreDownloadDetailView:self.preDownloadDetailView];
