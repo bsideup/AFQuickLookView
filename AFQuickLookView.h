@@ -25,55 +25,61 @@
 @interface AFQuickLookView : UIView
 
 /**
- 
+ <#add description#>
  */
-@property(nonatomic, strong, readonly) UIView* attachmentDetailView;
+@property(nonatomic, strong, readonly) UIView* preDownloadDetailView;
 
 /**
- 
+ <#add description#>
  */
-@property(nonatomic, strong, readonly) UIProgressView* progressView;
+@property(nonatomic, strong, readonly) UIProgressView* preDownloadProgressView;
 
 /**
- 
+ <#add description#>
  */
-@property(nonatomic, strong, readonly) UILabel* filenameLabel;
+@property(nonatomic, strong, readonly) UILabel* preDownloadFilenameLabel;
 
 /**
- 
+ <#add description#>
  */
-@property(nonatomic, strong, readonly) UIImageView* fileImageView;
+@property(nonatomic, strong, readonly) UIImageView* preDownloadFileImageView;
 
 /**
- 
+ <#add description#>
  */
-@property(nonatomic, assign, readwrite) BOOL showAttachmentDetailView;
+@property(nonatomic, assign, readwrite) BOOL preDownloadDetailViewVisible;
 
 
 /**
- 
+ <#add description#>
  */
-- (id)initWithFrame:(CGRect)frame showAttachmentDetailView:(BOOL)showAttachmentDetailView;
+- (id)initWithFrame:(CGRect)frame preDownloadDetailViewVisible:(BOOL)showPreDownloadDetailView;
 
 /**
- 
+ <#add description#>
  */
+
+- (id)initWithFrame:(CGRect)frame preDownloadDetailViewVisible:(BOOL)showPreDownloadDetailView preDownloadPlaceholderImage:(UIImage*)image filename:(NSString*)filename;
+
+/**
+<#add description#>
+*/
 - (void)cancelDownloadOperation;
 
 /**
- 
+ <#add description#>
  */
 - (void)previewDocumentAtURL:(NSURL*)url;
 
 /**
- 
+ <#add description#>
  */
 - (void)previewDocumentAtURL:(NSURL*)url
                      success:(void (^)(void))success
                      failure:(void (^)(NSError* error))failure;
 
 /**
- 
+ <#add description#>
  */
 - (void)previewDocumentAtURL:(NSURL*)url
                      success:(void (^)(void))success
