@@ -423,6 +423,9 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
         _mimeTypesToExtensionsDictionary = [NSMutableDictionary dictionary];
         _mimeTypesToExtensionsDictionary[@"application/pdf"] = @"pdf";
         _mimeTypesToExtensionsDictionary[@"application/msword"] = @"doc";
+        _mimeTypesToExtensionsDictionary[@"application/vnd.openxmlformats-officedocument.presentationml.presentation"] = @"pptx";
+        _mimeTypesToExtensionsDictionary[@"application/vnd.openxmlformats-officedocument.wordprocessingml.document"] = @"docx";
+        _mimeTypesToExtensionsDictionary[@"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = @"xlsx";
         _mimeTypesToExtensionsDictionary[@"image/jpeg"] = @"jpeg";
         _mimeTypesToExtensionsDictionary[@"application/pdf"] = @"pdf";
         _mimeTypesToExtensionsDictionary[@"application/vnd.ms-powerpoint"] = @"ppt";
