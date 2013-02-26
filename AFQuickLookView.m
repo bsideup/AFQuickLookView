@@ -30,6 +30,10 @@ static CGFloat kPaddingTopBetweenProgressViewAndFilenameLabel = 10.0f;
 static CGFloat kPaddingLeftAndRightFilenameLabel = 60.0f;
 static CGFloat kPaddingLeftAndRightProgressView = 80.0f;
 
+static CGSize kPreDownloadFileImageViewSize = {100.0f, 120.0f};
+static CGFloat kPreDownloadFilenameLabelHeight = 30.0f;
+static CGFloat kPreDownloadProgressViewHeight = 11.0f;
+
 static NSMutableDictionary* _mimeTypesToExtensionsDictionary = nil;
 
 typedef void (^AFQuickLookPreviewSuccessBlock)(void);
@@ -76,7 +80,9 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
         self.previewController = [[QLPreviewController alloc] init];
         [self setupPreviewController:self.previewController];
         
-        self.preDownloadDetailView = [[UIView alloc] initWithFrame:self.frame];
+        self.preDownloadDetailView = [[UIView alloc] initWithFrame:self.bounds];
+        [self addSubview:self.preDownloadDetailView];
+        
         [self setupPreDownloadDetailView:self.preDownloadDetailView];
         
         [self setupPreDownloadPlaceholderImage:image filename:filename];
@@ -91,7 +97,7 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
 
 - (void)setupPreviewController:(QLPreviewController*)controller {
     controller.dataSource = self;
-    controller.view.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+    controller.view.frame = self.bounds;
 }
 
 #pragma mark - attachment detail view setup
@@ -113,74 +119,62 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
         return;
     }
     
-    self.preDownloadDetailView.frame = CGRectMake(0, 0, preDownloadDetailView.frame.size.width, preDownloadDetailView.frame.size.height);
-    [self addSubview:self.preDownloadDetailView];
-    
     [self initializePreDownloadDetailViewSubviews];
-    [self layoutSubviewsForPreDownloadDetailView:self.preDownloadDetailView];
+    [self setupSubviewsForPreDownloadDetailView:self.preDownloadDetailView];
     [self addSubviewsToPreDownloadDetailView:self.preDownloadDetailView];
 }
 
+- (void)layoutSubviews {
+    [self layoutSubviewsForPreDownloadDetailView:self.preDownloadDetailView];
+}
+
 - (void)layoutSubviewsForPreDownloadDetailView:(UIView*)preDownloadDetailView {
-    [self setupFileImageView:self.preDownloadFileImageView detailView:preDownloadDetailView];
-    [self setupFilenameLabel:self.preDownloadFilenameLabel withFileImageView:self.preDownloadFileImageView detailView:preDownloadDetailView];
-    [self setupProgressView:self.preDownloadProgressView withFilenameLabel:self.preDownloadFilenameLabel detailView:preDownloadDetailView];
-    
     [self verticalAlignFileImageView:self.preDownloadFileImageView withProgressView:self.preDownloadProgressView detailView:preDownloadDetailView];
     [self verticalAlignFilenameLabel:self.preDownloadFilenameLabel withFileImageView:self.preDownloadFileImageView detailView:preDownloadDetailView];
     [self verticalAlignProgressView:self.preDownloadProgressView withFilenameLabel:self.preDownloadFilenameLabel detailView:preDownloadDetailView];
 }
 
+- (void)setupSubviewsForPreDownloadDetailView:(UIView*)preDownloadDetailView {
+    [self setupFileImageView:self.preDownloadFileImageView withProgressView:self.preDownloadProgressView detailView:preDownloadDetailView];
+    [self setupFilenameLabel:self.preDownloadFilenameLabel withFileImageView:self.preDownloadFileImageView detailView:preDownloadDetailView];
+    [self setupProgressView:self.preDownloadProgressView withFilenameLabel:self.preDownloadFilenameLabel detailView:preDownloadDetailView];
+}
+
 #pragma mark - progress detail view setup method
 
-- (void)setupProgressView:(UIProgressView*)progressView withFilenameLabel:(UILabel*)filenameLabel detailView:(UIView*)detailView {
-    CGFloat paddingTop = kPaddingTopBetweenProgressViewAndFilenameLabel;
-    CGFloat paddingLeftAndRight = kPaddingLeftAndRightProgressView;
-    CGSize progressViewSize = CGSizeMake((detailView.frame.size.width - 2*paddingLeftAndRight), 10);
-    CGRect progressViewFrame = CGRectMake(paddingLeftAndRight, filenameLabel.frame.origin.y + filenameLabel.frame.size.height + paddingTop, progressViewSize.width, progressViewSize.height );
-    progressView.frame = progressViewFrame;
+- (void)setupFileImageView:(UIImageView*)fileImageView withProgressView:(UIProgressView*)progressView detailView:(UIView*)detailView {
+    fileImageView.frame = CGRectMake(0.0f, 0.0f, kPreDownloadFileImageViewSize.width, kPreDownloadFileImageViewSize.height);
+    fileImageView.center = detailView.center;
+    [self verticalAlignFileImageView:fileImageView withProgressView:progressView detailView:detailView];
 }
 
 - (void)setupFilenameLabel:(UILabel*)filenameLabel withFileImageView:(UIImageView*)fileImageView detailView:(UIView*)detailView {
-    CGFloat paddingTop = kPaddingTopBetweenFilenameLabelAndImageView;
-    CGFloat paddingLeftAndRight = kPaddingLeftAndRightFilenameLabel;
-    CGSize filenameLabelSize = CGSizeMake((detailView.frame.size.width - 2*paddingLeftAndRight), 30);
-    CGRect filenameLabelRect = CGRectMake(paddingLeftAndRight, fileImageView.frame.origin.y + fileImageView.frame.size.height + paddingTop, filenameLabelSize.width, filenameLabelSize.height);
-    filenameLabel.frame = filenameLabelRect;    
+    filenameLabel.textAlignment = UITextAlignmentCenter;
+    filenameLabel.frame = CGRectMake(0.0f, 0.0f, CGRectGetWidth(detailView.frame) - 2*kPaddingLeftAndRightFilenameLabel, kPreDownloadFilenameLabelHeight);
+    filenameLabel.center = detailView.center;
+    [self verticalAlignFilenameLabel:filenameLabel withFileImageView:fileImageView detailView:detailView];
 }
 
-- (void)setupFileImageView:(UIImageView*)fileImageView detailView:(UIView*)detailView {
-    CGRect preDownloadDetailViewFrame = detailView.frame;
-    CGSize fileImageViewSize = CGSizeMake(100, 120);
-    CGFloat paddingTop = kPaddingTopBetweenFileImageViewAndSuperview;
-    CGRect fileImageViewRect = CGRectMake((preDownloadDetailViewFrame.size.width - fileImageViewSize.width)/2, (preDownloadDetailViewFrame.size.height - fileImageViewSize.height)/2, fileImageViewSize.width, fileImageViewSize.height);
-    fileImageView.frame = fileImageViewRect;
+- (void)setupProgressView:(UIProgressView*)progressView withFilenameLabel:(UILabel*)filenameLabel detailView:(UIView*)detailView {
+    progressView.frame = CGRectMake(0.0f, 0.0f, CGRectGetWidth(detailView.frame) - 2*kPaddingLeftAndRightProgressView, kPreDownloadProgressViewHeight);
+    progressView.center = detailView.center;
+    [self verticalAlignProgressView:progressView withFilenameLabel:filenameLabel detailView:detailView];
 }
 
 #pragma mark - progress detail view align method
 
 - (void)verticalAlignFileImageView:(UIImageView*)fileImageView withProgressView:(UIProgressView*)progressView detailView:(UIView*)detailView {
-    CGRect imageViewFrame = fileImageView.frame;
-    CGRect preDownloadProgressView = progressView.frame;
-    CGFloat heightOfAllSubviews = (preDownloadProgressView.origin.y + preDownloadProgressView.size.height - imageViewFrame.origin.y);
-    CGRect newImageViewFrame = CGRectMake(imageViewFrame.origin.x, (detailView.frame.size.height - heightOfAllSubviews) / 2, imageViewFrame.size.width, imageViewFrame.size.height);
-    fileImageView.frame = newImageViewFrame;
+    CGFloat heightOfAllSubviews = CGRectGetHeight(fileImageView.frame) + CGRectGetHeight(progressView.frame) + CGRectGetHeight(self.preDownloadFilenameLabel.frame) + kPaddingTopBetweenFilenameLabelAndImageView + kPaddingTopBetweenProgressViewAndFilenameLabel;
+    fileImageView.frame = CGRectMake(CGRectGetMinX(fileImageView.frame), (CGRectGetHeight(detailView.bounds) - heightOfAllSubviews) / 2,CGRectGetWidth(fileImageView.frame), CGRectGetHeight(fileImageView.frame));
 }
 
 - (void)verticalAlignFilenameLabel:(UILabel*)filenameLabel withFileImageView:(UIView*)fileImageView detailView:(UIView*)detailView {
-    CGRect filenameLabelViewFrame = filenameLabel.frame;
-    CGFloat paddingTop = kPaddingTopBetweenProgressViewAndFilenameLabel;
-    CGRect newFilenameLabelFrame = CGRectMake(filenameLabelViewFrame.origin.x, fileImageView.frame.origin.y + fileImageView.frame.size.height + paddingTop, filenameLabelViewFrame.size.width, filenameLabelViewFrame.size.height);
-    filenameLabel.frame = newFilenameLabelFrame;
+    filenameLabel.frame = CGRectMake(CGRectGetMinX(filenameLabel.frame), CGRectGetMinY(fileImageView.frame) + CGRectGetHeight(fileImageView.frame) + kPaddingTopBetweenProgressViewAndFilenameLabel, CGRectGetWidth(filenameLabel.frame), CGRectGetHeight(filenameLabel.frame));
 }
 
 - (void)verticalAlignProgressView:(UIProgressView*)progressView withFilenameLabel:(UILabel*)filenameLabel detailView:(UIView*)detailView {
-    CGRect progressViewFrame = progressView.frame;
-    CGFloat paddingTop = kPaddingTopBetweenProgressViewAndFilenameLabel;
-    CGRect newProgressViewFrame = CGRectMake(progressViewFrame.origin.x, filenameLabel.frame.origin.y + filenameLabel.frame.size.height + paddingTop, progressViewFrame.size.width, progressViewFrame.size.height);
-    progressView.frame = newProgressViewFrame;
+    progressView.frame = CGRectMake(CGRectGetMinX(progressView.frame), CGRectGetMinY(filenameLabel.frame) + CGRectGetHeight(filenameLabel.frame) + kPaddingTopBetweenProgressViewAndFilenameLabel, CGRectGetWidth(progressView.frame), CGRectGetHeight(progressView.frame));
 }
-
 
 #pragma mark - actions
 
@@ -189,7 +183,6 @@ typedef void (^AFQuickLookPreviewProgressBlock)(NSUInteger bytesRead, long long 
     CGFloat progress = ((CGFloat)totalBytesRead / (CGFloat)totalBytesExpectedToRead);
     self.preDownloadProgressView.progress = progress;
 }
-
 
 - (void)downloadDocumentAtURL:(NSURL*)url
                       success:(void (^)(AFHTTPRequestOperation* operation, NSURL *localFileURL))success
