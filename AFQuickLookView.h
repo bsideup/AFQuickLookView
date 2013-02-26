@@ -27,6 +27,11 @@
 /**
  <#add description#>
  */
+@property(nonatomic, strong, readonly) QLPreviewController *previewController;
+
+/**
+ <#add description#>
+ */
 @property(nonatomic, strong, readonly) UIView* preDownloadDetailView;
 
 /**
